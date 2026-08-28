@@ -60,7 +60,10 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(Object.fromEntries(formData.entries())),
       })
-      if (!response.ok) throw new Error('Não foi possível enviar sua mensagem.')
+      if (!response.ok) {
+        const result = await response.json().catch(() => null)
+        throw new Error(result?.error ?? 'Não foi possível enviar sua mensagem.')
+      }
       setSent(true)
       form.reset()
     } catch (error) {

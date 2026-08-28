@@ -25,6 +25,8 @@ function getTransporter() {
   })
 }
 
+const smtpIsConfigured = Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD)
+
 app.get('/api/health', (_request, response) => response.json({ ok: true }))
 
 app.post('/api/contact', async (request, response) => {
@@ -34,6 +36,9 @@ app.post('/api/contact', async (request, response) => {
   if (!emailPattern.test(data.email.trim())) return response.status(400).json({ error: 'Informe um email válido.' })
   if (data.name.length > 120 || data.subject.length > 160 || data.message.length > 5000) {
     return response.status(400).json({ error: 'Um dos campos excede o limite permitido.' })
+  }
+  if (!smtpIsConfigured) {
+    return response.status(503).json({ error: 'O envio de email ainda não está configurado no servidor.' })
   }
 
   try {
