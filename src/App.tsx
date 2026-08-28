@@ -34,6 +34,8 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrollProgress, setScrollProgress] = useState(0)
   const [sent, setSent] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [formError, setFormError] = useState('')
 
   useEffect(() => {
     const onScroll = () => {
@@ -45,19 +47,27 @@ function App() {
   }, [])
 
   const closeMenu = () => setMenuOpen(false)
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const formData = new FormData(event.currentTarget)
-    const subject = String(formData.get('subject') ?? 'Contato pelo portfólio')
-    const body = [
-      `Nome: ${formData.get('name') ?? ''}`,
-      `Email: ${formData.get('email') ?? ''}`,
-      '',
-      String(formData.get('message') ?? ''),
-    ].join('\n')
-    window.location.href = `mailto:${profile.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-    setSent(true)
-    event.currentTarget.reset()
+    const form = event.currentTarget
+    const formData = new FormData(form)
+    setSending(true)
+    setFormError('')
+    setSent(false)
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(Object.fromEntries(formData.entries())),
+      })
+      if (!response.ok) throw new Error('Não foi possível enviar sua mensagem.')
+      setSent(true)
+      form.reset()
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : 'Não foi possível enviar sua mensagem.')
+    } finally {
+      setSending(false)
+    }
   }
 
   return <div className="site-shell">
